@@ -52,37 +52,70 @@ namespace IdentityServer3.Core.Validation
         public async Task<ParsedSecret> ParseAsync(IDictionary<string, object> environment)
         {
             Logger.Debug("Start parsing for secret in post body");
-
             var context = new OwinContext(environment);
+
+            if (context.Request.IsJsonData())
+            {
+                return await ParsedJsonDataRequest(context);
+            }
+
+            return await ParsedFormDataRequest(context);
+        }
+
+        private async Task<ParsedSecret> ParsedJsonDataRequest(IOwinContext context)
+        {
+            var body = await context.Request.ReadBodyAsStringAsync();
+            var deserializedBody = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(body);
+
+            if (deserializedBody != null)
+            {
+                var id = deserializedBody.ContainsKey("client_id") ? deserializedBody["client_id"] : "";
+                var secret = deserializedBody.ContainsKey("client_secret") ? deserializedBody["client_secret"] : "";
+                if (id.IsPresent() && secret.IsPresent())
+                {
+                    return MapToParsedSecret(id, secret);
+                }
+            }
+
+            Logger.Debug("No secret in post body found");
+            return null;
+        }
+
+        private async Task<ParsedSecret> ParsedFormDataRequest(IOwinContext context)
+        {
             var body = await context.ReadRequestFormAsync();
 
             if (body != null)
             {
                 var id = body.Get("client_id");
                 var secret = body.Get("client_secret");
-
                 if (id.IsPresent() && secret.IsPresent())
                 {
-                    if (id.Length > _options.InputLengthRestrictions.ClientId ||
-                        secret.Length > _options.InputLengthRestrictions.ClientSecret)
-                    {
-                        Logger.Debug("Client ID or secret exceeds maximum lenght.");
-                        return null;
-                    }
-
-                    var parsedSecret = new ParsedSecret
-                    {
-                        Id = id,
-                        Credential = secret,
-                        Type = Constants.ParsedSecretTypes.SharedSecret
-                    };
-
-                    return parsedSecret;
+                    return MapToParsedSecret(id, secret);
                 }
             }
 
             Logger.Debug("No secret in post body found");
             return null;
+        }
+
+        private ParsedSecret MapToParsedSecret(string id, string secret)
+        {
+            if (id.Length > _options.InputLengthRestrictions.ClientId ||
+                secret.Length > _options.InputLengthRestrictions.ClientSecret)
+            {
+                Logger.Debug("Client ID or secret exceeds maximum length.");
+                return null;
+            }
+
+            var parsedSecret = new ParsedSecret
+            {
+                Id = id,
+                Credential = secret,
+                Type = Constants.ParsedSecretTypes.SharedSecret
+            };
+
+            return parsedSecret;
         }
     }
 }

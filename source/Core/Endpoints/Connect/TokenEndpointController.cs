@@ -34,7 +34,7 @@ namespace IdentityServer3.Core.Endpoints
     /// OAuth2/OpenID Conect token endpoint
     /// </summary>
     [NoCache]
-    [PreventUnsupportedRequestMediaTypes(allowFormUrlEncoded: true)]
+    [PreventUnsupportedRequestMediaTypes(allowFormUrlEncoded: true, allowJson: true)]
     internal class TokenEndpointController : ApiController
     {
         private readonly static ILog Logger = LogProvider.GetCurrentClassLogger();
@@ -71,8 +71,8 @@ namespace IdentityServer3.Core.Endpoints
         {
             Logger.Info("Start token request");
 
-            var response = await ProcessAsync(await Request.GetOwinContext().ReadRequestFormAsNameValueCollectionAsync());
-            
+            var response = await GetResponse();
+
             if (response is TokenErrorResult)
             {
                 var details = response as TokenErrorResult;
@@ -117,6 +117,20 @@ namespace IdentityServer3.Core.Endpoints
         private async Task RaiseFailureEventAsync(string error)
         {
             await _events.RaiseFailureEndpointEventAsync(EventConstants.EndpointNames.Token, error);
+        }
+
+        private async Task<IHttpActionResult> GetResponse()
+        {
+            IHttpActionResult response;
+            if (Request.GetOwinContext().Request.IsJsonData())
+            {
+                response = await ProcessAsync(await Request.GetOwinContext().ReadJsonRequestFormAsNameValueCollectionAsync());
+            }
+            else
+            {
+                response = await ProcessAsync(await Request.GetOwinContext().ReadRequestFormAsNameValueCollectionAsync());
+            }
+            return response;
         }
     }
 }

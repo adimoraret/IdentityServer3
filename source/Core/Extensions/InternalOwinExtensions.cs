@@ -318,6 +318,14 @@ namespace IdentityServer3.Core.Extensions
                 String.Equals(request.ContentType, "application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase);
         }
 
+        public static bool IsJsonData(this IOwinRequest request)
+        {
+            if (request == null) throw new ArgumentNullException("request");
+
+            return request.Method == "POST" &&
+                   String.Equals(request.ContentType, "application/json", StringComparison.OrdinalIgnoreCase);
+        }
+
         public async static Task<IFormCollection> ReadRequestFormAsync(this IOwinContext context)
         {
             if (context == null) throw new ArgumentNullException("context");
@@ -414,6 +422,27 @@ namespace IdentityServer3.Core.Extensions
 
             return nv;
         }
+
+        public async static Task<NameValueCollection> ReadJsonRequestFormAsNameValueCollectionAsync(this IOwinContext context)
+        {
+            if (context == null) throw new ArgumentNullException("context");
+
+            var jsonPostData = await context.Request.ReadBodyAsStringAsync();
+
+            var deserializedPostData = Newtonsoft.Json.JsonConvert.DeserializeObject<IDictionary<string, string>>(jsonPostData);
+
+            NameValueCollection nv = new NameValueCollection();
+
+            foreach (var data in deserializedPostData)
+            {
+                if (data.Value.Any())
+                {
+                    nv.Add(data.Key, data.Value);
+                }
+            }
+            return nv;
+        }
+
 
         const string SignOutMessageCookieIdtoRemove = "ids:SignOutMessageCookieIdtoRemove";
         public static void QueueRemovalOfSignOutMessageCookie(this IOwinContext context, string id)
