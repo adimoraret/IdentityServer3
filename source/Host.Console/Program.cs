@@ -33,7 +33,7 @@ namespace Host.Console
                 .WriteTo.LiterateConsole()
                 .CreateLogger();
 
-            var webApp = WebApp.Start("https://localhost:44333", app =>
+            var webApp = WebApp.Start("https://localhost:44331", app =>
             {
                 app.UseIdentityServer();
             });
@@ -45,7 +45,7 @@ namespace Host.Console
                 var key = System.Console.ReadKey(true);
                 if (key.Key == ConsoleKey.B)
                 {
-                    Process.Start("https://localhost:44333/core");
+                    Process.Start("https://localhost:44331/core");
                 }
                 else
                 {
