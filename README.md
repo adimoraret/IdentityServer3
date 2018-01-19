@@ -1,5 +1,13 @@
 # IdentityServer3 #
 
+## Included application/json content type
+
+Before adding application/json content type
+![Before application/json](assets/identity-server3-before-application-json-content-type.png "Before adding application/json content type")
+
+After adding application/json content type
+![After application/json](assets/identity-server3-after-application-json-content-type.png "After adding application/json content type")
+
 ## Note: This repository is no longer in active development or maintenance, other than reported security vulnerabilities.
 ## We highly encourage you to consider [IdentityServer4](https://github.com/IdentityServer/IdentityServer4/) instead.
 ## If you have questions and are seeking free support, see [here](http://docs.identityserver.io/en/release/intro/support.html#free-support) for more details.
